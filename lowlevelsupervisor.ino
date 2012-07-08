@@ -32,7 +32,7 @@ guido@guiott.com
 
 
 // Compiler options
-#define DEBUG_MODE // If defined the serial output is in ASCII for debug
+// #define DEBUG_MODE // If defined the serial output is in ASCII for debug
 
 
 #include <Wire.h>
@@ -142,7 +142,7 @@ void loop()
 {  
  
   if (BlinkCycle.check() == 1) {HeartBeat();}  // Led blink
-  if (AnalogCycle.check() == 1) {AnalogRead();}   // Write On display
+  if (AnalogCycle.check() == 1) {AnalogRead();}   // Read all analog values
 
 }
 
