@@ -8,7 +8,7 @@ void LLSstartup ()
   digitalWrite(Sw_Power_latch,HIGH);
   Beep(50);
   digitalWrite(Led,HIGH);
-  I2cBeep(300);
+  I2cBeep(100);
   
   delay(500);    // wait for stabilization
   

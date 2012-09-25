@@ -71,13 +71,13 @@ int Temp1_Val;
 int Temp2_Val;
 
 //Summation values
-int V7_Sum=0;
-int Pwr1_Vin_Sum=0;
-int Pwr2_Vin_Sum=0;
-int Batt1_Vin_Sum=0;
-int Batt2_Vin_Sum=0;
-int Temp1_Sum=0;
-int Temp2_Sum=0;
+unsigned long V7_Sum=0;
+unsigned long Pwr1_Vin_Sum=0;
+unsigned long Pwr2_Vin_Sum=0;
+unsigned long Batt1_Vin_Sum=0;
+unsigned long Batt2_Vin_Sum=0;
+unsigned long Temp1_Sum=0;
+unsigned long Temp2_Sum=0;
 
 int AverageCount = 0;
 
@@ -111,7 +111,7 @@ int LedStat = LOW;
 #define I2C_DISP 0x22         // Display I2C address
 
 Metro BlinkCycle = Metro(BLINK_OFF,1);  // LED blink cycle
-Metro AnalogCycle = Metro(10,1);        // Display write cycle
+Metro AnalogCycle = Metro(AVERAGE_CYCLE,1);  // Display write cycle
 
 
 int TimeElapsed = millis();
