@@ -14,14 +14,13 @@ void AnalogRead (void)
   Batt2_Vin_Sum += analogRead(Batt2_Vin); 
   Temp1_Sum += analogRead(Temp1); 
   Temp2_Sum += analogRead(Temp2); 
- 
   AverageCount ++;
   if(AverageCount >= AVERAGE_MAX)
   {// after N cycles compute the mean values
       AverageCount = 0;
       
       // ---------------------------------------LLS PWR supply
-      V7_Val = V7_Sum >> 5;                       // average dividing by 32,
+      V7_Val = V7_Sum >> 6;                       // average dividing by 64,
       V7_Sum = 0;                                 // restart for another cycle
       V7_Val = int((float(V7_Val) * V7_K)+0.5);   // multiplying by K to obtain the final value int * 100
       
@@ -32,10 +31,10 @@ void AnalogRead (void)
       
   
       // --------------------------------------- Batt1
-      Batt1_Vin_Val = Batt1_Vin_Sum >> 5;                   // average dividing by 32,
+      Batt1_Vin_Val = Batt1_Vin_Sum >> 6;                // average dividing by 64,
       Batt1_Vin_Sum = 0;                                 // restart for another cycle
       Batt1_Vin_Val = int((float(Batt1_Vin_Val) * Batt1_Vin_K)+0.5);// multiplying by K to obtain the final value int * 100
-          
+                   
       if(Batt1_Vin_Val < VBATT_THRESHOLD1) 
       {
        Defcon1(2); // never returns because this procedure switches off LLS
@@ -47,10 +46,9 @@ void AnalogRead (void)
     
     
       // --------------------------------------- Batt2
-      Batt2_Vin_Val = Batt2_Vin_Sum >> 5;                   // average dividing by 32,
+      Batt2_Vin_Val = Batt2_Vin_Sum >> 6;                // average dividing by 64,
       Batt2_Vin_Sum = 0;                                 // restart for another cycle
       Batt2_Vin_Val = int((float(Batt2_Vin_Val) * Batt2_Vin_K)+0.5);// multiplying by K to obtain the final value int * 100
-          
       if(Batt2_Vin_Val < VBATT_THRESHOLD1) 
       {
        Defcon1(3); // never returns because this procedure switches off LLS
@@ -61,7 +59,7 @@ void AnalogRead (void)
       }   
   
       // --------------------------------------- Power Supply 1
-      Pwr1_Vin_Val = Pwr1_Vin_Sum >> 5;                   // average dividing by 32,
+      Pwr1_Vin_Val = Pwr1_Vin_Sum >> 6;               // average dividing by 64,
       Pwr1_Vin_Sum = 0;                               // restart for another cycle
       Pwr1_Vin_Val = int((float(Pwr1_Vin_Val) * Pwr1_Vin_K)+0.5);// multiplying by K to obtain the final value int * 100
           
@@ -71,7 +69,7 @@ void AnalogRead (void)
       }
       
       // --------------------------------------- Power Supply 2
-      Pwr2_Vin_Val = Pwr2_Vin_Sum >> 5;                   // average dividing by 32,
+      Pwr2_Vin_Val = Pwr2_Vin_Sum >> 6;               // average dividing by 64,
       Pwr2_Vin_Sum = 0;                               // restart for another cycle
       Pwr2_Vin_Val = int((float(Pwr2_Vin_Val) * Pwr2_Vin_K)+0.5);// multiplying by K to obtain the final value int * 100
           
@@ -82,7 +80,7 @@ void AnalogRead (void)
     
     
       // --------------------------------------- Temperature 1
-      Temp1_Val = Temp1_Sum >> 5;                   // average dividing by 32,
+      Temp1_Val = Temp1_Sum >> 6;                  // average dividing by 64,
       Temp1_Sum = 0;                               // restart for another cycle
       Temp1_Val = int((float(Temp1_Val) * Temp1_K)+0.5);// multiplying by K to obtain the final value int * 100
           
@@ -92,7 +90,7 @@ void AnalogRead (void)
       }    
     
        // --------------------------------------- Temperature 2
-      Temp2_Val = Temp2_Sum >> 5;                   // average dividing by 32,
+      Temp2_Val = Temp2_Sum >> 6;                  // average dividing by 64,
       Temp2_Sum = 0;                               // restart for another cycle
       Temp2_Val = int((float(Temp2_Val) * Temp2_K)+0.5);// multiplying by K to obtain the final value int * 100
           
