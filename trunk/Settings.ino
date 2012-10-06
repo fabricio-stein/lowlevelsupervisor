@@ -320,7 +320,7 @@ void LLSstartup ()
     delay(5);
   }
   
-   for(i=0; i<=255; i++)
+  for(i=0; i<=255; i++)
   {
     analogWrite(Light_L,255-i);
     analogWrite(Light_R,255-i);
@@ -334,31 +334,9 @@ void LLSstartup ()
       Serial.println("  ");
     #endif  
     
-  #ifdef DEBUG_MODE //switch off demonstration
-    DelayBar(2000);
-    DelayBar(2000);
-    Serial.println("Switching off Battery 1");
-    DelayBar(2000);
-    digitalWrite(Batt_1_En,LOW);
-    
-    Serial.println("Switching off Battery 2");
-    DelayBar(2000);
-    digitalWrite(Batt_2_En,LOW);
-    
-    Serial.println("Switching off Power Supply 1");
-    DelayBar(2000);
-    digitalWrite(Pwr_1_En,LOW);
-    
-    Serial.println("Switching off Power Supply 2");
-    DelayBar(2000);
-    digitalWrite(Pwr_2_En,LOW);
-    
-    Serial.println("SWITCHING OFF MYSELF");
-    DelayBar(4000);
-    Serial.println("BYE");
-    Beep(1000);
-    digitalWrite(Sw_Power_latch,LOW);
-  #endif
+    #ifdef DEMO_MODE //switch off demonstration
+      Shutdown(0);
+    #endif
 }
 
 

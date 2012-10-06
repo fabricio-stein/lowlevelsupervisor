@@ -1,4 +1,125 @@
 //-----------------------------------------------------------------------------      
+void Shutdown (int ShTime)
+{
+/**
+ *\brief Gracefull shutdown
+  *
+ */
+  int i=0;
+
+  /*  ???????????  To Be Done  ????????????????????
+  Send a message to High Level Supervisor to order a shutdown procedure
+  Wait for ACK
+  Proceed with shutdown as follows
+  */
+    
+    delay(ShTime);
+    
+    // Light dim to 0
+    for(i=0; i<=255; i++)
+    {
+      analogWrite(Light_L,255-i);
+      analogWrite(Light_R,255-i);
+      delay(5);
+    }
+
+    #ifdef DEBUG_MODE
+      DelayBar(2000);
+      DelayBar(2000);
+      Serial.println("Switching off Battery 1");
+      DelayBar(2000);
+    #else 
+      delay(500);
+    #endif
+    digitalWrite(Batt_1_En,LOW);
+    
+    #ifdef DEBUG_MODE
+      Serial.println("Switching off Battery 2");
+      DelayBar(2000);
+    #else 
+      delay(500);
+    #endif
+    digitalWrite(Batt_2_En,LOW);
+    
+    #ifdef DEBUG_MODE
+      Serial.println("Switching off Power Supply 1");
+      DelayBar(2000);
+    #else 
+      delay(500);
+    #endif
+    digitalWrite(Pwr_1_En,LOW);
+
+    #ifdef DEBUG_MODE
+      Serial.println("Switching off Power Supply 2");
+      DelayBar(2000);
+    #else 
+      delay(500);
+    #endif
+    digitalWrite(Pwr_2_En,LOW);
+    
+    #ifdef DEBUG_MODE
+      Serial.println("SWITCHING OFF MYSELF");
+      DelayBar(4000);
+      Serial.println("BYE");
+    #else 
+      delay(500);
+    #endif    Beep(1000);
+    digitalWrite(Sw_Power_latch,LOW);
+}
+
+//-----------------------------------------------------------------------------      
+void SwOff (void)
+{
+/**
+ *\brief Control the Software Off Button to proceed with gracefull shutdown
+  *
+ */
+  if (!SwOffFlag)
+  {
+    if (!digitalRead(Sw_Off_Btn))  // Control SW Off button
+    {
+      SwOffCount ++;  // Measure how long the button is pressed
+      if (SwOffCount >= SW_OFF_MAX)
+      {
+        SwOffCount = 0;
+        SwOffFlag = 1;
+        
+        Wire.beginTransmission(I2C_DISP);
+          Wire.write(0x00);    //write on first register 
+          Wire.write(0x50);    // LEDs bar left CCW animation
+          Wire.write(0x20);    // first cipher 
+          Wire.write(0x2F);    // second cipher
+          Wire.write(0x50);    // LEDs bar right CCW animation
+          Wire.write(0x33);    // Arrows 
+        Wire.endTransmission();
+        
+        delay(2000);
+      }
+    }
+    else
+    {
+      SwOffCount = 0;
+    }
+  }
+  else
+  {
+     SwOffCount ++;  // Wait some time if button pressed
+     if (SwOffCount >= SW_OFF_MAX)
+     {// if the button is not pressed again abort shutdown
+       SwOffCount = 0;
+       SwOffFlag = 0;
+     }
+     else
+     {
+       if (!digitalRead(Sw_Off_Btn))  // Control SW Off button
+        {  
+          Shutdown(100);
+        }   
+     } 
+  }
+}
+
+//-----------------------------------------------------------------------------      
 void AnalogRead (void)
 {
 /**
@@ -6,21 +127,104 @@ void AnalogRead (void)
   *
  */
   
+  /* Switching in advance to the next port to measure, to allow the voltage
+      to stabilize on the ADC Sample/Hold
+  */
+  int Dummy; 
+  
  // Summation of N values
-  V7_Sum += analogRead(V7);            
-  Pwr1_Vin_Sum += analogRead(Pwr1_Vin); 
-  Pwr2_Vin_Sum += analogRead(Pwr2_Vin); 
-  Batt1_Vin_Sum += analogRead(Batt1_Vin); 
-  Batt2_Vin_Sum += analogRead(Batt2_Vin); 
-  Temp1_Sum += analogRead(Temp1); 
-  Temp2_Sum += analogRead(Temp2); 
-  AverageCount ++;
+  switch (AveragePort)
+  { 
+    case 0:
+      Batt1_Vin_Sum += analogRead(Batt1_Vin);
+      #ifdef DEBUG_MODE
+        Dummy = analogRead(Batt1_Vin); 
+        Serial.print("***Batt1_Vin = ");
+        Serial.print(Dummy);
+      #endif      
+      Dummy = analogRead(Batt2_Vin); 
+      break;
+      
+    case 1:
+      Batt2_Vin_Sum += analogRead(Batt2_Vin);
+      #ifdef DEBUG_MODE
+        Dummy = analogRead(Batt2_Vin); 
+        Serial.print("--Batt2_Vin = ");
+        Serial.print(Dummy);
+      #endif  
+      Dummy = analogRead(Pwr1_Vin); 
+      break;
+      
+    case 2:
+      Pwr1_Vin_Sum += analogRead(Pwr1_Vin); 
+      #ifdef DEBUG_MODE
+        Dummy = analogRead(Pwr1_Vin); 
+        Serial.print("--Pwr1_Vin = ");
+        Serial.print(Dummy);
+      #endif      
+      Dummy = analogRead(Pwr2_Vin); 
+      break;   
+      
+    case 3:
+      Pwr2_Vin_Sum += analogRead(Pwr2_Vin); 
+      #ifdef DEBUG_MODE
+        Dummy = analogRead(Pwr2_Vin); 
+        Serial.print(" Pwr2_Vin = ");
+        Serial.print(Dummy);
+      #endif
+      Dummy = analogRead(V7); 
+      break;
+      
+    case 4:
+      V7_Sum += analogRead(V7); 
+      #ifdef DEBUG_MODE
+        Dummy = analogRead(V7); 
+        Serial.print("--V7 = ");
+        Serial.print(Dummy);
+      #endif
+      Dummy = analogRead(Temp1); 
+      break;
+   
+    case 5:
+      Temp1_Sum += analogRead(Temp1); 
+      #ifdef DEBUG_MODE
+        Dummy = analogRead(Temp1); 
+        Serial.print("--Temp1 = ");
+        Serial.print(Dummy);
+      #endif
+      Dummy = analogRead(Temp2); 
+      break;  
+
+    case 6:
+      Temp2_Sum += analogRead(Temp2);
+      #ifdef DEBUG_MODE
+        Dummy = analogRead(Temp2); 
+        Serial.print("--Temp2 = ");
+        Serial.print(Dummy);
+        Serial.print("--Time = ");
+        Serial.println(millis()-Elapsed);
+        Elapsed=millis();
+      #endif
+      Dummy = analogRead(Batt1_Vin); 
+      break;
+      
+    default:
+      break;
+  }
+  
+  AveragePort++;
+  if(AveragePort > AVERAGE_PORT_MAX)
+  {// when all analog ports are scanned, returns to the first one
+      AveragePort = 0;
+      AverageCount ++;
+  }
+         
   if(AverageCount >= AVERAGE_MAX)
   {// after N cycles compute the mean values
       AverageCount = 0;
       
       // ---------------------------------------LLS PWR supply
-      V7_Val = V7_Sum >> 6;                       // average dividing by 64,
+      V7_Val = V7_Sum >> AVERAGE_SHIFT;           // average dividing by 64,
       V7_Sum = 0;                                 // restart for another cycle
       V7_Val = int((float(V7_Val) * V7_K)+0.5);   // multiplying by K to obtain the final value int * 100
       
@@ -31,7 +235,7 @@ void AnalogRead (void)
       
   
       // --------------------------------------- Batt1
-      Batt1_Vin_Val = Batt1_Vin_Sum >> 6;                // average dividing by 64,
+      Batt1_Vin_Val = Batt1_Vin_Sum >> AVERAGE_SHIFT;    // average dividing by 64,
       Batt1_Vin_Sum = 0;                                 // restart for another cycle
       Batt1_Vin_Val = int((float(Batt1_Vin_Val) * Batt1_Vin_K)+0.5);// multiplying by K to obtain the final value int * 100
                    
@@ -46,7 +250,7 @@ void AnalogRead (void)
     
     
       // --------------------------------------- Batt2
-      Batt2_Vin_Val = Batt2_Vin_Sum >> 6;                // average dividing by 64,
+      Batt2_Vin_Val = Batt2_Vin_Sum >> AVERAGE_SHIFT;    // average dividing by 64,
       Batt2_Vin_Sum = 0;                                 // restart for another cycle
       Batt2_Vin_Val = int((float(Batt2_Vin_Val) * Batt2_Vin_K)+0.5);// multiplying by K to obtain the final value int * 100
       if(Batt2_Vin_Val < VBATT_THRESHOLD1) 
@@ -59,7 +263,7 @@ void AnalogRead (void)
       }   
   
       // --------------------------------------- Power Supply 1
-      Pwr1_Vin_Val = Pwr1_Vin_Sum >> 6;               // average dividing by 64,
+      Pwr1_Vin_Val = Pwr1_Vin_Sum >> AVERAGE_SHIFT;   // average dividing by 64,
       Pwr1_Vin_Sum = 0;                               // restart for another cycle
       Pwr1_Vin_Val = int((float(Pwr1_Vin_Val) * Pwr1_Vin_K)+0.5);// multiplying by K to obtain the final value int * 100
           
@@ -69,7 +273,7 @@ void AnalogRead (void)
       }
       
       // --------------------------------------- Power Supply 2
-      Pwr2_Vin_Val = Pwr2_Vin_Sum >> 6;               // average dividing by 64,
+      Pwr2_Vin_Val = Pwr2_Vin_Sum >> AVERAGE_SHIFT;   // average dividing by 64,
       Pwr2_Vin_Sum = 0;                               // restart for another cycle
       Pwr2_Vin_Val = int((float(Pwr2_Vin_Val) * Pwr2_Vin_K)+0.5);// multiplying by K to obtain the final value int * 100
           
@@ -80,7 +284,7 @@ void AnalogRead (void)
     
     
       // --------------------------------------- Temperature 1
-      Temp1_Val = Temp1_Sum >> 6;                  // average dividing by 64,
+      Temp1_Val = Temp1_Sum >> AVERAGE_SHIFT;      // average dividing by 64,
       Temp1_Sum = 0;                               // restart for another cycle
       Temp1_Val = int((float(Temp1_Val) * Temp1_K)+0.5);// multiplying by K to obtain the final value int * 100
           
@@ -90,7 +294,7 @@ void AnalogRead (void)
       }    
     
        // --------------------------------------- Temperature 2
-      Temp2_Val = Temp2_Sum >> 6;                  // average dividing by 64,
+      Temp2_Val = Temp2_Sum >> AVERAGE_SHIFT;      // average dividing by 64,
       Temp2_Sum = 0;                               // restart for another cycle
       Temp2_Val = int((float(Temp2_Val) * Temp2_K)+0.5);// multiplying by K to obtain the final value int * 100
           
@@ -99,9 +303,11 @@ void AnalogRead (void)
         Defcon2(8); // never returns because this procedure hangs the program
       } 
    
-     Display(); // update the display with the new values   
-  }
-  
+     if (!SwOffFlag)
+     {// update the display with the new values only if shutdown procedure is not started 
+       Display();    
+     }
+  }  
 }
 
 //-----------------------------------------------------------------------------      
@@ -111,13 +317,7 @@ void Display (void)
  *\brief write numbers on display via I2C bus
   *
  */
-    static unsigned char DispNum=0;
-    unsigned char LeftBar;
-    unsigned char LeftNum;
-    unsigned char RightNum;
-    unsigned char RightBar;
     unsigned char Arrow;
-    unsigned char Buzz;
     int Temp_Val;
     int Temp_Val_T;
     int Temp_Val_U;
@@ -154,22 +354,7 @@ void Display (void)
     else
     {
       DisplayError();
-    }
-    
-/*
-    Wire.beginTransmission(I2C_DISP);
-    Wire.write(0x01); //write on first register 
-    Wire.endTransmission(false); //trasmission without stop, follows a restart with read
-    
-    Wire.requestFrom(I2C_DISP, 2);
-    if(4 <= Wire.available())   // if four bytes were received
-  {
-    Serial.println(Wire.read());// receive high byte
-    Serial.println(Wire.read());// receive high byte
-    Serial.println(Wire.read());// receive high byte
-    Serial.println(Wire.read());// receive high byte
-  }
- */   
+    } 
 }
 
 //-----------------------------------------------------------------------------       
