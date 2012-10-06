@@ -1,13 +1,13 @@
 /* ////////////////////////////////////////////////////////////////////////////
 ** File:      LowLevelSupervisor.ino
 */                                  
- unsigned char  Ver[] = "LinoLLS     0.8.0 Guiott 07-12"; // 30+1 char
+ unsigned char  Ver[] = "LinoLLS     0.9.2 Guiott 10-12"; // 30+1 char
 
 /**
 * \mainpage LowLevelSupervisor.ino
 * \author    Guido Ottaviani-->guido@guiott.com<--
-* \version 0.8.0
-* \date 07/12
+* \version 0.9.1
+* \date 10/12
 * \details 
  *
 -------------------------------------------------------------------------------
@@ -33,6 +33,7 @@ guido@guiott.com
 
 // Compiler options
 // #define DEBUG_MODE // If defined the serial output is in ASCII for debug
+// #define DEMO_MODE  // If defined it switches off at the end
 
 
 #include <Wire.h>
@@ -46,6 +47,7 @@ int Batt_2_En = 50;       // Enable 14.4V on PowerControl 2
 int Pwr_2_En  = 52;       // Enable 7V on PowerControl 2                
 int Sw_Power_latch = 53;  // Relay self retention on LL board
 int Buzzer = 51;          // Buzzer on LLS board
+int Sw_Off_Btn = 44;          // Software Off Button
 
 // PWM
 int Light_L = 2;          // Headlights intensity control
@@ -80,6 +82,7 @@ unsigned long Temp1_Sum=0;
 unsigned long Temp2_Sum=0;
 
 int AverageCount = 0;
+int AveragePort = 0;
 
 // Conversion and calibration factors
 const float V7_K = 2.32;
@@ -88,7 +91,9 @@ const float Pwr2_Vin_K = 2.51;
 const float Batt1_Vin_K = 2.422;
 const float Batt2_Vin_K = 2.422;
 const float Temp1_K = 5.35;
-const float Temp2_K = 5.13;
+const float Temp2_K = 5.35;
+
+unsigned long Elapsed = 0;
 
 #define VBATT_THRESHOLD  1350 // Battery alert in Volt * 10
 #define VBATT_THRESHOLD1 1300 // Battery alert in Volt * 10
@@ -97,8 +102,17 @@ const float Temp2_K = 5.13;
 #define TEMP_THRESHOLD 4500   // Temeperature limit in degrees * 100
 #define UP 1                  // Arrow direction
 #define DN 2                  // Arrow direction
-#define AVERAGE_MAX 64        // Number of iterations before averaging analog values
-#define AVERAGE_CYCLE 50      // Time between cycles 64 iterations * 50ms = 3.2s for each measure
+#define AVERAGE_MAX 16        // Number of iterations before averaging analog values
+#define AVERAGE_SHIFT 4       // Divide by 16 bit shifting 4 positions
+#define AVERAGE_CYCLE 50      // Time between cycles 
+#define AVERAGE_PORT_MAX 6    // Analog port number
+/* Each analog measure is done every AVERAGE_CYCLE milliseconds. 
+   To complete a full ports scan it must cycle AVERAGE_PORT_MAX + 1.
+   A full set of measure is for AVERAGE_MAX iterations before averaging.
+   So, there is a new full set of measures every:
+     AVERAGE_CYCLE * (AVERAGE_PORT_MAX + 1) * AVERAGE_MAX 
+   in this case 50 * (6+1) * 16 = 5.6 seconds
+*/
 
 int ErrCode=0;                // Error code
 
@@ -110,8 +124,16 @@ int LedStat = LOW;
 
 #define I2C_DISP 0x22         // Display I2C address
 
-Metro BlinkCycle = Metro(BLINK_OFF,1);  // LED blink cycle
+// SW Off Button must be kept pressed SW_OFF_CYCLE * SW_OFF_MAX ms
+// i.e.: 250 * 12 = 3s
+#define SW_OFF_CYCLE 250      // Sofware Off Button Control cycle
+#define SW_OFF_MAX 12         // Iterations before accepting SW shutdown 
+int SwOffFlag = 0;            // Is the gracefull shutdown procedure started?
+int SwOffCount = 0;           // Cycle counter
+
+Metro BlinkCycle = Metro(BLINK_OFF,1);       // LED blink cycle
 Metro AnalogCycle = Metro(AVERAGE_CYCLE,1);  // Display write cycle
+Metro SwOffCycle = Metro(SW_OFF_CYCLE,1);    // Sofware Off Button Control cycle
 
 
 int TimeElapsed = millis();
@@ -120,6 +142,15 @@ int TimeElapsed = millis();
 
 void setup()
 {
+  pinMode(A0, INPUT);
+  pinMode(A1, INPUT);
+  pinMode(A2, INPUT);
+  pinMode(A3, INPUT);
+  pinMode(A4, INPUT);
+  pinMode(A5, INPUT);
+  pinMode(A6, INPUT);
+  pinMode(Sw_Off_Btn, INPUT);
+    
   pinMode(Led, OUTPUT);      // sets the digital pin as output
   pinMode(Batt_1_En, OUTPUT);
   pinMode(Pwr_1_En, OUTPUT);
@@ -141,8 +172,8 @@ void setup()
 void loop()
 {  
  
-  if (BlinkCycle.check() == 1) {HeartBeat();}  // Led blink
+  if (BlinkCycle.check() == 1) {HeartBeat();}     // Led blink
   if (AnalogCycle.check() == 1) {AnalogRead();}   // Read all analog values
-
+  if (SwOffCycle.check() == 1) {SwOff();}         // Control SW Off button
 }
 
