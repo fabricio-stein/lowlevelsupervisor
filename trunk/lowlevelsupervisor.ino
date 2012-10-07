@@ -98,7 +98,7 @@ unsigned long Elapsed = 0;
 #define VBATT_THRESHOLD  1350 // Battery alert in Volt * 10
 #define VBATT_THRESHOLD1 1300 // Battery alert in Volt * 10
 #define PWR_THRESHOLD_MIN 650 // Power Supply alert in Volt * 10
-#define PWR_THRESHOLD_MAX 750 // Power Supply alert in Volt * 10
+#define PWR_THRESHOLD_MAX 850 // Power Supply alert in Volt * 10
 #define TEMP_THRESHOLD 4500   // Temeperature limit in degrees * 100
 #define UP 1                  // Arrow direction
 #define DN 2                  // Arrow direction
