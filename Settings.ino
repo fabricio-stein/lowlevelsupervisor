@@ -8,9 +8,9 @@ void LLSstartup ()
   digitalWrite(Sw_Power_latch,HIGH);
   Beep(50);
   digitalWrite(Led,HIGH);
-  I2cBeep(100);
+  //I2cBeep(100);
   
-  delay(500);    // wait for stabilization
+  delay(2000);    // wait for stabilization
   
   // ---------------------------------------LLS PWR supply
   for(i=0; i<128; i++)  
@@ -75,14 +75,7 @@ void LLSstartup ()
     #endif    
     ErrCode=0;
   }
-  
-  Wire.beginTransmission(I2C_DISP);
-  Wire.write(0x00); //write on first register 
-  Wire.write(BatteryLevel(Batt1_Vin_Val));    // LEDs bar left 
-  Wire.write(0);                 
-  Wire.write(0);                
-  Wire.endTransmission();
-      
+       
   // --------------------------------------- Batt2
   for(i=0; i<128; i++)  
   {
@@ -123,16 +116,9 @@ void LLSstartup ()
       Serial.println("      Switching on Power Supply 1");
   #endif    
   digitalWrite(Pwr_1_En,HIGH);
-  delay(500);
-  
-  Wire.beginTransmission(I2C_DISP);
-  Wire.write(0x00); //write on first register 
-  Wire.write(BatteryLevel(Batt1_Vin_Val));    // LEDs bar left 
-  Wire.write(0);                  
-  Wire.write(0);               
-  Wire.write(BatteryLevel(Batt2_Vin_Val));    // LEDs bar right 
-  Wire.endTransmission();
-      
+   delay(500);
+
+
   // --------------------------------------- Power Supply 1
   for(i=0; i<128; i++)  
   {
@@ -165,6 +151,7 @@ void LLSstartup ()
   
   digitalWrite(Pwr_2_En,HIGH);
   delay(500);
+  
   // --------------------------------------- Power Supply 2
   for(i=0; i<128; i++)  
   {
@@ -227,16 +214,6 @@ void LLSstartup ()
   
   int Temp_Val_T=Temp1_Val/100;
   int Temp_Val_U=(Temp1_Val+5-(Temp_Val_T*100))/10;
-
-  Wire.beginTransmission(I2C_DISP);
-  Wire.write(0x00);                           //write on first register 
-  Wire.write(BatteryLevel(Batt1_Vin_Val));    // LEDs bar left 
-  Wire.write(Temp_Val_T);                     // Degrees units 
-  Wire.write(Temp_Val_U);                     // Degrees tens
-  Wire.write(BatteryLevel(Batt2_Vin_Val));    // LEDs bar right 
-  Wire.write(DN);                             // Arrows, DN means Temp 1 
-  Wire.endTransmission();
-   
      
  // --------------------------------------- Temperature 2
   for(i=0; i<128; i++)  
@@ -270,16 +247,6 @@ void LLSstartup ()
  
   Temp_Val_T=Temp2_Val/100;
   Temp_Val_U=(Temp2_Val+5-(Temp_Val_T*100))/10;
-
-  Wire.beginTransmission(I2C_DISP);
-  Wire.write(0x00);                           //write on first register 
-  Wire.write(BatteryLevel(Batt1_Vin_Val));    // LEDs bar left 
-  Wire.write(Temp_Val_T);                     // Degrees units 
-  Wire.write(Temp_Val_U);                     // Degrees tens
-  Wire.write(BatteryLevel(Batt2_Vin_Val));    // LEDs bar right 
-  Wire.write(UP);                             // Arrows, DN means Temp 1 
-  Wire.endTransmission();    
-    
     
  // TO Be Done; Check boards healt
  
@@ -337,6 +304,36 @@ void LLSstartup ()
     #ifdef DEMO_MODE //switch off demonstration
       Shutdown(0);
     #endif
+    
+    delay(2000);    // wait for stabilization
+    
+    Wire.beginTransmission(I2C_DISP);
+    Wire.write(0x00); //write on first register 
+    Wire.write(BatteryLevel(Batt1_Vin_Val));    // LEDs bar left 
+    Wire.write(0);                 
+    Wire.write(0);                
+    Wire.endTransmission();
+    
+    delay(500);
+  
+    Wire.beginTransmission(I2C_DISP);
+    Wire.write(0x00); //write on first register 
+    Wire.write(BatteryLevel(Batt1_Vin_Val));    // LEDs bar left 
+    Wire.write(0);                  
+    Wire.write(0);               
+    Wire.write(BatteryLevel(Batt2_Vin_Val));    // LEDs bar right 
+    Wire.endTransmission();
+
+    delay(500);
+
+    Wire.beginTransmission(I2C_DISP);
+    Wire.write(0x00);                           //write on first register 
+    Wire.write(BatteryLevel(Batt1_Vin_Val));    // LEDs bar left 
+    Wire.write(Temp_Val_T);                     // Degrees units 
+    Wire.write(Temp_Val_U);                     // Degrees tens
+    Wire.write(BatteryLevel(Batt2_Vin_Val));    // LEDs bar right 
+    Wire.write(DN);                             // Arrows, DN means Temp 1 
+    Wire.endTransmission();
 }
 
 
